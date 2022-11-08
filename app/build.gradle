@@ -1,0 +1,263 @@
+import java.text.SimpleDateFormat
+
+plugins {
+    id 'com.android.application'
+}
+
+println "青霄科技：项目根路径 project path " + getRootProject().getProjectDir().absolutePath
+def properties = new Properties()
+def signProperties = new Properties()
+def signFilePath = getRootProject().getProjectDir().absolutePath + File.separator + "sign.properties"
+def RELEASE_PROPERTIES_EXIST = false;
+File f = new File(signFilePath)
+RELEASE_PROPERTIES_EXIST = f.exists()
+if (!RELEASE_PROPERTIES_EXIST) {
+    println "青霄科技：not found config file没有找到签名配置文件！\n--------------debug模式运行"
+} else {
+    println "青霄科技：found config file找到签名配置文件sign.properties！\n--------------release模式运行"
+}
+
+static def getVersionName() {
+    def sdf = new SimpleDateFormat("yyyyMMddHH")
+    return sdf.format(new Date())
+}
+
+def auto_verison_name = getVersionName()
+
+def versionCodeNum = 92
+def projectName = "app-inland"
+
+android {
+    compileSdkVersion 28
+    buildToolsVersion "30.0.3"
+
+    defaultConfig {
+        applicationId "qx.app.study"
+        minSdkVersion 21
+        targetSdkVersion 28
+        versionCode 92
+        versionName "1.0" + auto_verison_name
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+        javaCompileOptions {
+            annotationProcessorOptions {
+                includeCompileClasspath = true
+            }
+        }
+        ndk {
+            // 设置支持的SO库架构
+            abiFilters 'armeabi', "armeabi-v7a", "arm64-v8a"
+            //, 'x86', 'armeabi-v7a', 'x86_64', 'arm64-v8a'
+        }
+    }
+
+
+    //配置签名文件
+    if (RELEASE_PROPERTIES_EXIST) {
+        signProperties.load(new FileInputStream(signFilePath))
+        signingConfigs {
+            release {
+                signProperties.load(new FileInputStream(signFilePath))
+                storeFile file(signProperties.get("file"))
+                storePassword signProperties.get("password")
+                keyAlias signProperties.get("alias")
+                keyPassword signProperties.get("key_password")
+            }
+        }
+    }
+
+    buildTypes {
+
+        release.initWith(buildTypes.debug)
+        product.initWith(buildTypes.debug)
+
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            //设置ip
+            properties.load(new FileInputStream(getRootProject().getProjectDir().absolutePath + File.separator + "release.properties"))
+            Set<String> keys = properties.keySet()
+            for (String key : keys) {
+                buildConfigField("String", key, "\"" + properties.get(key) + "\"")
+            }
+            //配置打包签名的信息
+            if (RELEASE_PROPERTIES_EXIST) {
+                signingConfig signingConfigs.release
+            }
+        }
+        //测试环境(可调试)
+//        debugRelease {
+//            minifyEnabled false
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+//            //设置ip
+//            properties.load(new FileInputStream(getRootProject().getProjectDir().absolutePath + File.separator + "release.properties"))
+//            Set<String> keys = properties.keySet()
+//            for (String key : keys) {
+//                buildConfigField("String", key, "\"" + properties.get(key) + "\"")
+//            }
+//        }
+        //测试环境
+        //生产环境
+        product {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            //设置ip
+            properties.load(new FileInputStream(getRootProject().getProjectDir().absolutePath + File.separator + "product.properties"))
+            Set<String> keys = properties.keySet()
+            for (String key : keys) {
+                buildConfigField("String", key, "\"" + properties.get(key) + "\"")
+            }
+            //配置打包签名的信息
+            if (RELEASE_PROPERTIES_EXIST) {
+                signingConfig signingConfigs.release
+            }
+        }
+        //开发环境
+        debug {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            //设置ip
+            properties.load(new FileInputStream(getRootProject().getProjectDir().absolutePath + File.separator + "debug.properties"))
+            Set<String> keys = properties.keySet()
+            for (String key : keys) {
+                buildConfigField("String", key, "\"" + properties.get(key) + "\"")
+            }
+        }
+
+//        //生产环境(可调试)
+//        debugProduct {
+//            minifyEnabled false
+//            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+//            //设置ip
+//            properties.load(new FileInputStream(getRootProject().getProjectDir().absolutePath + File.separator + "product.properties"))
+//            Set<String> keys = properties.keySet()
+//            for (String key : keys) {
+//                buildConfigField("String", key, "\"" + properties.get(key) + "\"")
+//            }
+//            //配置打包签名的信息
+//            if (RELEASE_PROPERTIES_EXIST) {
+//                signingConfig signingConfigs.release
+//            }
+//        }
+
+    }
+    repositories {
+        flatDir {
+            dirs 'libs'
+        }
+    }
+    dataBinding {
+        enabled = true
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    lintOptions {
+        checkReleaseBuilds false
+        abortOnError false
+    }
+}
+configurations.all {
+    resolutionStrategy.eachDependency { DependencyResolveDetails details ->
+        def requested = details.requested
+        if (requested.group == 'com.android.support') {
+            if (!requested.name.startsWith("multidex")) {
+                details.useVersion '28.0.0'
+            }
+        }
+    }
+}
+dependencies {
+
+    implementation 'androidx.appcompat:appcompat:1.1.0'
+    implementation 'com.google.android.material:material:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
+    implementation 'androidx.navigation:navigation-fragment:2.2.2'
+    implementation 'androidx.navigation:navigation-ui:2.2.2'
+    testImplementation 'junit:junit:4.+'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.1'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
+    //黄油刀
+    annotationProcessor 'com.jakewharton:butterknife-compiler:10.2.0'
+    implementation 'com.jakewharton:butterknife:10.2.0'
+    implementation 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.31'
+    if (JavaVersion.current().ordinal() >= JavaVersion.VERSION_1_9.ordinal()) {
+        // If you're using @AutoValue or any libs that requires javax.annotation (like Dagger)
+        compileOnly 'com.github.pengrad:jdk9-deps:1.0'
+        compileOnly 'javax.annotation:javax.annotation-api:1.3.2'
+
+
+        // If you're using Java
+        annotationProcessor "com.sun.xml.bind:jaxb-core:2.3.0.1"
+        annotationProcessor "javax.xml.bind:jaxb-api:2.3.1"
+
+        testAnnotationProcessor "com.sun.xml.bind:jaxb-core:2.3.0.1"
+        testAnnotationProcessor "javax.xml.bind:jaxb-api:2.3.1"
+    }
+
+}
+build.doLast {
+    println "===========================执行doLast============================="
+    if (RELEASE_PROPERTIES_EXIST) {
+        def SEPARATOR = File.separator
+        def signApk_Release_dir = getRootProject().getProjectDir().absolutePath + SEPARATOR + "app" + SEPARATOR + "build" + SEPARATOR + "outputs" + SEPARATOR + "apk" + SEPARATOR + "release" + SEPARATOR + "app-release.apk"
+        def signApk_Product_dir = getRootProject().getProjectDir().absolutePath + SEPARATOR + "app" + SEPARATOR + "build" + SEPARATOR + "outputs" + SEPARATOR + "apk" + SEPARATOR + "product" + SEPARATOR + "app-product.apk"
+
+        def jar_dir = signProperties.get("jar")
+        def pem_dir = signProperties.get("pem")
+        def pk8_dir = signProperties.get("pk8")
+        def destination_Release_dir = signProperties.get("destination") + projectName + "-v" + versionCodeNum + "_" + new Date().format("MM-dd-HH-mm") + "-release.apk"
+        def destination_Product_dir = signProperties.get("destination") + projectName + "-v" + versionCodeNum + "_" + new Date().format("MM-dd-HH-mm") + "-product.apk"
+        println "find destination_Release_dir  file>> \n" + destination_Release_dir + '\n' + destination_Product_dir
+        if (new File(signApk_Release_dir).exists() && new File(signApk_Product_dir)) {
+            println "find待签名文件[release] file>>" + signApk_Release_dir
+            println "find待签名文件[product] >>" + signApk_Product_dir
+        } else {
+            println "待签名文件NOT FOUND >>" + signApk_Release_dir
+            println "待签名文件NOT FOUND >>" + signApk_Product_dir
+            println "………………………………………………加密异常退出………………………………………………"
+            return
+        }
+        if (new File(jar_dir).exists()) {
+            println "找到加密jar file文件 >>" + jar_dir
+        } else {
+            println "加密jar文件 NOT FOUND >>" + jar_dir
+            println "………………………………………………加密异常退出………………………………………………"
+            return
+        }
+        if (new File(pem_dir).exists()) {
+            println "找到加密pem file文件 >>" + pem_dir
+        } else {
+            println "加密pem文件NOT FOUND >>" + pem_dir
+            println "………………………………………………加密异常退出………………………………………………"
+            return
+        }
+        if (new File(pk8_dir).exists()) {
+            println "找到加密pk8 file文件 >> \n" + pk8_dir
+        } else {
+            println "加密pk8文件NOT FOUND >> \n" + pk8_dir
+            println "………………………………………………加密异常退出………………………………………………"
+            return
+        }
+        def executeReleaseStr = "java -jar " + jar_dir + " -w " + pem_dir + " " + pk8_dir + " " + signApk_Release_dir + " " + destination_Release_dir
+        def executeProductStr = "java -jar " + jar_dir + " -w " + pem_dir + " " + pk8_dir + " " + signApk_Product_dir + " " + destination_Product_dir
+        println "执行[Release & Product]：开始加密 \n" + executeReleaseStr + "  \n " + executeProductStr
+        println executeReleaseStr.execute().text.trim()
+        println executeProductStr.execute().text.trim()
+
+        if (new File(destination_Release_dir).exists()) {
+            println "加密[Release]成功suc！>>" + destination_Release_dir
+        } else {
+            println "加密[Release]失败fa！！！！"
+        }
+        if (new File(destination_Product_dir).exists()) {
+            println "加密[Product]成功s！>>" + destination_Product_dir
+        } else {
+            println "加密[Product]失败f1！！！！"
+        }
+    } else {
+        println "没有签名文件，不进行apk加密操作！！！！"
+    }
+    println "===========================执行doLast 结束============================="
+}

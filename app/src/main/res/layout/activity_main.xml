@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <RelativeLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content">
+
+        <TextView
+
+            android:id="@+id/tv_hello"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:padding="5sp"
+            android:text="hahahah"
+
+            android:textSize="18sp" />
+
+        <ImageView
+            android:id="@+id/iv_hhhh"
+            android:layout_width="wrap_content"
+            android:layout_height="@+id/tv_hello"
+            android:layout_below="@+id/tv_hello"
+            android:layout_alignTop="@+id/tv_hello"
+            android:layout_marginLeft="1dp"
+            android:layout_toRightOf="@+id/tv_hello"
+            android:src="@mipmap/add_img" />
+
+    </RelativeLayout>
+
+    <Button
+        android:id="@+id/button"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Button"
+        android:visibility="gone" />
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:padding="10dp"
+        android:id="@+id/rv_data"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        />
+</LinearLayout>
